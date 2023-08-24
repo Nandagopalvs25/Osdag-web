@@ -130,7 +130,7 @@ class CADGeneration(View):
             # path = 'file_storage/cad_models/Uv9aURCfBDmhoosxMUy2UT7P3ghXcvV3_Model.brep'
             path_to_file = os.path.join(parent_dir, path)
             output_dir = os.path.join(
-                parent_dir, 'osdagclient/public/output-obj.obj')
+                parent_dir, 'file_storage/cad_models/{0}_{1}.obj'.format(cookie_id, section))
         except Exception as e : 
             print('output dir e : ' , e)
         # Call the subprocess to create the empty output file
@@ -144,6 +144,10 @@ class CADGeneration(View):
         process = subprocess.Popen(command_with_arg.split())
         
         time.sleep(3)
-        response = HttpResponse(output_dir, status=201)
+        with open(output_dir, 'r') as data_file: # Open the file that contains the OBJ file
+            obj_data = data_file.read() # Dump OBJ data from file to variables
+        os.system("rm {}".format(output_dir)) # Delete Brep file
+        os.system("rm {}".format(path_to_file)) # Delete OBJ file
+        response = HttpResponse(obj_data, status=201)
         response["content-type"] = "text/plain"
         return response

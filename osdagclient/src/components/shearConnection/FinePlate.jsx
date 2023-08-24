@@ -16,6 +16,7 @@ import { Canvas } from '@react-three/fiber'
 import { ModuleContext } from '../../context/ModuleState';
 import { Viewer } from '@react-pdf-viewer/core';
 import { Transfer } from 'antd';
+import { init_cad_data, load_cad_model, RenderCadModel } from './cad_renderer_updated'
 // Import the styles
 import '@react-pdf-viewer/core/lib/styles/index.css';
 
@@ -160,7 +161,7 @@ function FinePlate() {
 
     if (!selectedOption) return;
 
-    if (selectedOption === 'Column Flange-Beam-Web') {
+    if (selectedOption === '`Column Flange-Beam-Web`') {
       setImageSource(CFBW)
     } else if (selectedOption === 'Column Web-Beam-Web') {
       setImageSource(CWBW);
@@ -284,6 +285,7 @@ function FinePlate() {
       }
     }
     createDesign(param)
+    init_cad_data(); /* This will download the CAD models for rendering */
     setDisplayOutput(true)
   }
   // Create design report ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -875,18 +877,7 @@ function FinePlate() {
           </div>
           {/* Middle */}
           <div className='superMainBody_mid'>
-            {renderBoolean ?
-              <div style={{ maxwidth: '740px', height: '600px', border: '1px solid black', backgroundImage: `url(${cad_background})` }}>
-                <Canvas gl={{ antialias: true }} camera={{ aspect: 1, fov: 1500, position: [10, 10, 10] }} >
-                  <Model />
-                </Canvas>
-              </div> :
-              <>
-                <div style={{ maxwidth: '740px', height: '600px', border: '1px solid black' }}>
-                  {<img src={cad_background} alt="Demo" height='100%' width='100%' />}
-                </div>
-              </>
-            }
+              <RenderCadModel render_boolean={renderBoolean} type={selectedOption}/>
             <br />
             <div>
               <Logs logs={logs} />

@@ -2,6 +2,7 @@ import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
 import { OrbitControls, useTexture} from '@react-three/drei'
 import { useLoader } from '@react-three/fiber';
 import React, {useMemo} from "react";
+import { Euler } from 'three';
 //import mdl from  
 function Model() {
     const obj = useLoader(OBJLoader,"/output-obj.obj"); //issue is here that our .obj model is not getting loaded in the objloader
@@ -27,7 +28,7 @@ function Model() {
     return (
       <group name='scene'>
           <axesHelper args={[200]}/> 
-          <mesh geometry={geometry} scale={0.008}>
+          <mesh geometry={geometry} scale={0.01} rotation={new Euler(Math.PI / -2,0,Math.PI / 2)}>
             <meshPhysicalMaterial attach = "material" color={'#FF0000'} metalness={0.25} roughness={0.1} opacity={2.0} transparent = {true} transmission={0.99} clearcoat={1.0} clearcoatRoughness={0.25}/>
           </mesh>
           <OrbitControls />
