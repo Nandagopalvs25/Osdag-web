@@ -63,9 +63,11 @@ function FinePlate() {
   const [boltDiameterSelect, setBoltDiameterSelect] = useState("All")
   const [thicknessSelect, setThicknessSelect] = useState("All")
   const [propertyClassSelect, setPropertyClassSelect] = useState("All")
+  const [loadingCadModel, setLoadingCadModel] = useState(false); /* When the CAD model is being downloaded, this variable will be true, otherwise false. */
+  const [currentType, setCurrentType] = useState("Column Flange-Beam-Web"); /* This is so that the rotation does not suddenly update */
+  const [cadFail, setCadFail] = useState(false); /* Failiure flag for cad model generation */
 
   const { connectivityList, beamList, columnList, materialList, boltDiameterList, thicknessList, propertyClassList, designLogs, designData, displayPDF, renderCadModel, createSession, createDesign, createDesignReport } = useContext(ModuleContext)
-
   const [inputs, setInputs] = useState({
     bolt_diameter: [],
     bolt_grade: [],
@@ -285,7 +287,7 @@ function FinePlate() {
       }
     }
     createDesign(param)
-    init_cad_data(); /* This will download the CAD models for rendering */
+    init_cad_data(setLoadingCadModel, setCurrentType, selectedOption, setCadFail); /* This will download the CAD models for rendering */
     setDisplayOutput(true)
   }
   // Create design report ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -877,7 +879,7 @@ function FinePlate() {
           </div>
           {/* Middle */}
           <div className='superMainBody_mid'>
-              <RenderCadModel render_boolean={renderBoolean} type={selectedOption}/>
+              <RenderCadModel loadingState={loadingCadModel} render_boolean={renderBoolean} type={currentType} cad_fail={cadFail}/>
             <br />
             <div>
               <Logs logs={logs} />

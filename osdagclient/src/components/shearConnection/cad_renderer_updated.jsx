@@ -8,6 +8,7 @@ import { OrbitControls, useTexture} from '@react-three/drei'
 import { useLoader } from '@react-three/fiber';
 import React, {useMemo, useState} from "react";
 import cad_background from '../../assets/cad_empty_image.png'
+import loading_icon from '../../assets/loading_icon.gif'
 import { Canvas } from '@react-three/fiber'
 import { Euler } from 'three';
 const BASE_URL = 'http://127.0.0.1:8000/';
@@ -21,8 +22,22 @@ const empty_image_background = (
     <div style={{ maxwidth: '740px', height: '600px', border: '1px solid black' }}>
       {<img src={cad_background} alt="Demo" height='100%' width='100%' />}
     </div>
-) /* When CAD does not render */
+); /* When CAD does not render */
 
+const loading_background = (
+    <div style={{ maxwidth: '740px', height: '600px', border: '1px solid black' }}>
+      {<img src={cad_background} alt="Demo" height='100%' width='100%' style={{position: "relative"}}/>}
+      {<img src={loading_icon} alt="Loading..." height='100px' width='100px' style={{position: 'relative', top: -350, left: 350}}/>}
+    </div>
+); /* When CAD does not render */
+
+const error_background = (
+    <div style={{ maxwidth: '740px', height: '600px', border: '1px solid black' }}>
+    {<img src={cad_background} alt="Demo" height='100%' width='100%' style={{position: "relative"}}/>}
+    <h1 style={{color: "red", position: 'relative', top: -350, left: 120}}>Error in generating CAD model.</h1>
+  </div>
+);
+const fail_message = "CAD model generation failed";
 function CadModelViewport(properties) {
     /* Returns a CAD model viewport to place objects in */
     return ( /* Source - FinePlate.jsx */
@@ -40,39 +55,63 @@ function CadModelViewport(properties) {
 
 function RenderCadModel(properties) {
     /* Renders the model and creats the viewport */
-    if (properties.render_boolean) {
-        let rotation = new Euler(Math.PI / -2,0,0);
-        if (properties.type == "Column Web-Beam-Web") rotation = new Euler(0,Math.PI / -2,0); /* No rotation for this type */
-        else if (properties.type == "Beam-Beam") rotation = new Euler(Math.PI / 2,0,0); /* No rotation for Beam-Beam */
-        if (plate_data  && beam_data && column_data ) { /* If none of them fail */ 
-            var plate_3d = load_three_mesh(plate_data, "#a89732", 0.01, rotation); /* Create a mesh object for the plate */
-            var column_3d = load_three_mesh(column_data, "#32a840", 0.01, rotation); /* Ditto for column */
-            var beam_3d = load_three_mesh(beam_data, "#3268a8", 0.01, rotation); /* Ditto for beam */
+    if (!properties.cad_fail) {
+        if (properties.render_boolean) {
+            if (!properties.loadingState) {
+                let rotation = new Euler(Math.PI / -2,0,0);
+                if (properties.type == "Column Web-Beam-Web") rotation = new Euler(0,Math.PI / -2,0); /* No rotation for this type */
+                else if (properties.type == "Beam-Beam") rotation = new Euler(Math.PI / 2,0,0); /* No rotation for Beam-Beam */
+                if (plate_data  && beam_data && column_data ) { /* If none of them fail */ 
+                    var plate_3d = load_three_mesh(plate_data, "#a89732", 0.01, rotation); /* Create a mesh object for the plate */
+                    var column_3d = load_three_mesh(column_data, "#32a840", 0.01, rotation); /* Ditto for column */
+                    var beam_3d = load_three_mesh(beam_data, "#3268a8", 0.01, rotation); /* Ditto for beam */
 
-            return ( /* What to put in the viewport */
-                <div>
-                    <CadModelViewport>
-                        {plate_3d}
-                        {beam_3d}
-                        {column_3d}
-                    </CadModelViewport>
-                </div>
-            )
-        }
-        else { /* If any of the requests fail */
+                    return ( /* What to put in the viewport */
+                        <div>
+                            <CadModelViewport>
+                                {plate_3d}
+                                {beam_3d}
+                                {column_3d}
+                            </CadModelViewport>
+                        </div>
+                    )
+                }
+                else { /* If any of the requests fail */
+                    return error_background;
+                }
+            }
+            else {
+                return loading_background;
+            }
+        } else { /* Nothing on the screen */
             return empty_image_background;
         }
-    }
-    else {
-        return empty_image_background;
+    } else { /* Cad model generation failed */
+        return error_background;
     }
 }
 
-async function init_cad_data() {
+async function init_cad_data(setLoadingCadModel, setCurrentType, selectedOption, setCadFail) {
     /* Download all CAD models */
+    setCadFail(false);
+    setLoadingCadModel(true); /* Downloading CAD data. */
     plate_data = await load_cad_model('Plate');
+    if (plate_data == undefined) {
+        setCadFail(true); /* Set Failiure Message */
+        return;
+    }
     column_data = await load_cad_model('Column');
+    if (column_data == undefined) {
+        setCadFail(true); /* Set Failiure Message */
+        return;
+    }
     beam_data = await load_cad_model('Beam');
+    if (column_data == undefined) {
+        setCadFail(true); /* Set Failiure Message */
+        return;
+    }
+    setCurrentType(selectedOption); /* Set the rotation value for the CAD model */
+    setLoadingCadModel(false); /* Done downloading cad data */
 }
 
 async function load_cad_model(section) {
